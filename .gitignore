@@ -1,0 +1,29 @@
+.windsurf/rules/kluster-code-verify.md
+.kluster
+
+# Node
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build outputs
+dist/
+build/
+client/dist/
+
+# Environment files
+.env
+client/.env
+server/.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
