@@ -5,29 +5,34 @@ import Avatar from './Avatar.jsx';
 
 export default function Topbar({ minimal = false }) {
   const { user, signOut } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false); // mobile hamburger menu
+  const [userMenuOpen, setUserMenuOpen] = useState(false); // desktop user dropdown
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-700 bg-zinc-900/80 backdrop-blur supports-[backdrop-filter]:bg-zinc-900/70">
       <div className="px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-zinc-800/70"
+            aria-label="Open menu"
+            onClick={() => setMobileOpen((v) => !v)}
+          >
+            ☰
+          </button>
           <div className="h-6 w-6 rounded-md bg-indigo-500 flex items-center justify-center text-white font-bold">✦</div>
           <Link to="/" className="text-white font-semibold tracking-wide">MindMerge</Link>
         </div>
         {minimal ? (
           <div />
         ) : (
-          <div className="flex items-center gap-3 relative">
-            <Link to="/submit" className="btn btn-primary h-9">Share a Post</Link>
-            <button className="btn btn-ghost h-9" title="Notifications">🔔</button>
+          <div className="flex items-center gap-3">
+            <Link to="/submit" className="btn btn-primary h-9 hidden sm:inline-flex">Share a Post</Link>
+            <button className="btn btn-ghost h-9 hidden sm:inline-flex" title="Notifications">🔔</button>
             {user ? (
               <div className="relative">
                 <button
                   className="flex items-center gap-2 focus:outline-none"
-                  onClick={() => setMenuOpen((v) => !v)}
-                  onBlur={(e) => {
-                    // Close when focus leaves the button and menu
-                    if (!e.currentTarget.contains(e.relatedTarget)) setMenuOpen(false);
-                  }}
+                  onClick={() => setUserMenuOpen((v) => !v)}
                 >
                   <Avatar
                     name={user.displayName || (user.email ? String(user.email).split('@')[0] : 'User')}
@@ -39,23 +44,10 @@ export default function Topbar({ minimal = false }) {
                     <span className="text-[11px] text-white/60 truncate max-w-[160px]">{user.email}</span>
                   </div>
                 </button>
-                {menuOpen ? (
-                  <div className="absolute right-0 mt-2 w-44 rounded-md border border-zinc-800 bg-zinc-900 shadow-lg py-1 z-50">
-                    <Link
-                      to="/profile"
-                      className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Profile
-                    </Link>
-                    <button
-                      className="w-full text-left block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => { setMenuOpen(false); signOut(); }}
-                    >
-                      Log Out
-                    </button>
+                {userMenuOpen ? (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md border border-zinc-800 bg-zinc-950 shadow-lg p-2 hidden sm:block">
+                    <Link to="/profile" className="block px-2 py-1 rounded hover:bg-zinc-800/70" onClick={() => setMenuOpen(false)}>Profile</Link>
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-zinc-800/70" onClick={signOut}>Log Out</button>
                   </div>
                 ) : null}
               </div>
@@ -63,6 +55,23 @@ export default function Topbar({ minimal = false }) {
           </div>
         )}
       </div>
+      {/* Inline mobile menu under header */}
+      {user && mobileOpen ? (
+        <div className="md:hidden">
+          {/* overlay to close */}
+          <button className="fixed inset-0 z-40" aria-label="Close menu" onClick={() => setMobileOpen(false)} />
+          <div className="fixed z-50 top-14 left-2 right-2 rounded-lg border border-zinc-800 bg-zinc-950 shadow-xl p-3">
+            <nav className="flex flex-col gap-1">
+              <Link to="/feed" className="px-3 py-2 rounded-md hover:bg-zinc-800/80" onClick={() => setMobileOpen(false)}>Active Feed</Link>
+              <Link to="/submit" className="px-3 py-2 rounded-md hover:bg-zinc-800/80" onClick={() => setMobileOpen(false)}>Share a Post</Link>
+              <Link to="/myposts" className="px-3 py-2 rounded-md hover:bg-zinc-800/80" onClick={() => setMobileOpen(false)}>My Posts</Link>
+              <Link to="/completed" className="px-3 py-2 rounded-md hover:bg-zinc-800/80" onClick={() => setMobileOpen(false)}>Completed</Link>
+              <Link to="/profile" className="px-3 py-2 rounded-md hover:bg-zinc-800/80" onClick={() => setMobileOpen(false)}>Profile</Link>
+              <button className="text-left px-3 py-2 rounded-md hover:bg-zinc-800/80" onClick={() => { setMobileOpen(false); signOut(); }}>Log Out</button>
+            </nav>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

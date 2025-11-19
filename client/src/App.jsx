@@ -88,13 +88,13 @@ export default function App() {
 
       {/* Fixed Sidebar (only when authed and ready) */}
       {!isAuthRoute && !loading && user ? (
-        <div className="fixed top-14 bottom-14 left-0 w-64 z-30">
+        <div className="hidden md:block fixed top-14 bottom-14 left-0 w-64 z-30">
           <Sidebar />
         </div>
       ) : null}
 
       {/* Scrollable main content area */}
-      <div className={isAuthRoute ? 'absolute top-14 bottom-14 left-0 right-0 overflow-auto' : 'absolute top-14 bottom-14 left-64 right-0 overflow-auto'}>
+      <div className={isAuthRoute ? 'absolute top-14 bottom-14 left-0 right-0 overflow-auto' : 'absolute top-14 bottom-14 left-0 md:left-64 right-0 overflow-auto'}>
         <main className="px-4 py-6">
           <Routes>
             <Route path="/" element={<HomeGate />} />

@@ -19,9 +19,7 @@ export default function Profile() {
     let active = true;
     const run = async () => {
       try {
-        console.log('[PROFILE] initial fetch start');
         const res = await api.get('/me/profile', { params: { t: Date.now() } });
-        console.log('[PROFILE] initial fetch ok', res?.data);
         if (!active) return;
         setName(res.data?.name || '');
         setLinkedinUrl(res.data?.linkedinUrl || '');
@@ -29,7 +27,6 @@ export default function Profile() {
         // Prefill with Google photo if server has none
         setPhotoURL(serverPhoto || user?.photoURL || '');
       } catch (e) {
-        console.warn('[PROFILE] initial fetch miss or error', e?.response?.status, e?.response?.data || e?.message);
         // If profile missing, keep fields empty and let user fill
         // But still show Google photo if available
         if (active) setPhotoURL(user?.photoURL || '');
