@@ -7,8 +7,10 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { push } = useToast() || { push: () => {} };
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(null);
   const [visited, setVisited] = useState(() => {
     try {
       const raw = localStorage.getItem('visitedPostIds');
@@ -71,9 +73,17 @@ export default function Feed() {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/posts');
-      const data = res.data || [];
+      const res = await api.get('/posts', { params: { page, pageSize } });
+      const payload = res.data;
+      const data = Array.isArray(payload) ? payload : (payload?.items || []);
       setItems(data);
+      if (Array.isArray(payload)) {
+        setHasMore(false);
+        setTotal(null);
+      } else {
+        setHasMore(!!payload?.hasMore);
+        setTotal(typeof payload?.total === 'number' ? payload.total : null);
+      }
       // Initialize counts map from server metrics if present, else 0
       setCounts(() => {
         const m = new Map();
@@ -102,31 +112,7 @@ export default function Feed() {
     }
   };
 
-  useEffect(() => { load(); }, []);
-
-  useEffect(() => {
-    // Reset to first page when items change
-    setPage(1);
-  }, [items.length]);
-
-  // Viewport-fit pagination: compute how many cards can fit without scrolling
-  useEffect(() => {
-    const calc = () => {
-      const viewport = window.innerHeight || 800;
-      const topbar = 56; // h-14
-      const footer = 64; // ~py-4
-      const verticalGutters = 24; // main padding etc
-      const available = Math.max(200, viewport - topbar - footer - verticalGutters);
-      const headerEstimate = 120; // title + controls
-      const cardEstimate = 160; // average card height
-      const fit = Math.floor((available - headerEstimate) / cardEstimate);
-      const next = Math.min(10, Math.max(1, fit));
-      setItemsPerPage(next);
-    };
-    calc();
-    window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
-  }, []);
+  useEffect(() => { load(); }, [page]);
 
   const markDone = async (id) => {
     try {
@@ -201,10 +187,6 @@ export default function Feed() {
       });
   }, [items, visited]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedItems.length / itemsPerPage));
-  const start = (page - 1) * itemsPerPage;
-  const pageItems = sortedItems.slice(start, start + itemsPerPage);
-
   if (loading) {
     return (
       <div className="px-2 sm:px-0 max-w-3xl mx-auto space-y-4">
@@ -215,6 +197,23 @@ export default function Feed() {
             <div className="mt-3 h-6 w-2/3 bg-zinc-800 rounded" />
           </div>
         ))}
+        <div className="flex items-center justify-between mt-6">
+          <button
+            className="btn btn-ghost"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            ◀ Prev
+          </button>
+          <div className="text-sm opacity-80">Page {page}</div>
+          <button
+            className="btn btn-ghost"
+            disabled={!hasMore || loading}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next ▶
+          </button>
+        </div>
       </div>
     );
   }
@@ -234,7 +233,7 @@ export default function Feed() {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {sortedItems.length === 0 ? (
         <div className="mt-8 rounded-2xl border-2 border-dashed border-zinc-800 bg-zinc-900/40 p-10 text-center">
           <div className="text-3xl mb-3">📬</div>
           <div className="text-lg font-medium mb-1">All caught up!</div>
@@ -244,7 +243,7 @@ export default function Feed() {
       ) : null}
 
       <div className="space-y-4">
-        {pageItems.map((p) => {
+        {sortedItems.map((p) => {
             const isVisited = visited.has(p._id);
             const eng = engage.get(p._id) ?? { liked: false, commented: false };
             const canDone = !!(eng.liked && eng.commented);
@@ -328,25 +327,29 @@ export default function Feed() {
             );
           })}
       </div>
-      {sortedItems.length > itemsPerPage ? (
-        <div className="mt-6 flex items-center justify-between">
-          <button
-            className="btn btn-ghost h-9"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          >
-            ← Previous
-          </button>
-          <div className="text-sm opacity-70">Page {page} of {totalPages}</div>
-          <button
-            className="btn btn-ghost h-9"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-          >
-            Next →
-          </button>
+      <div className="mt-6 flex items-center justify-between">
+        <button
+          className="btn btn-ghost h-9"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page <= 1}
+        >
+          ← Previous
+        </button>
+        <div className="text-sm opacity-70">
+          {total != null ? (
+            <>Page {page} of {Math.max(1, Math.ceil(total / pageSize))}</>
+          ) : (
+            <>Page {page}</>
+          )}
         </div>
-      ) : null}
+        <button
+          className="btn btn-ghost h-9"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={total != null ? (page >= Math.max(1, Math.ceil(total / pageSize))) : !hasMore}
+        >
+          Next →
+        </button>
+      </div>
     </div>
   );
 }
