@@ -2,7 +2,7 @@ import express from 'express';
 import UserPostStatus from '../models/UserPostStatus.js';
 import Post from '../models/Post.js';
 import User from '../models/User.js';
-import { isValidLinkedInUrl, isValidHttpsUrl } from '../utils/validators.js';
+import { isValidLinkedInUrl, isValidHttpsUrl, isValidLinkedInProfileUrl } from '../utils/validators.js';
 
 const router = express.Router();
 
@@ -93,7 +93,7 @@ router.post('/profile', async (req, res) => {
     const cleanPhoto = (photoURL || '').toString().trim();
     if (!cleanName) return res.status(400).json({ error: 'Name is required' });
     if (!cleanUrl) return res.status(400).json({ error: 'LinkedIn URL is required' });
-    if (!isValidLinkedInUrl(cleanUrl)) return res.status(400).json({ error: 'Invalid LinkedIn URL' });
+    if (!isValidLinkedInProfileUrl(cleanUrl)) return res.status(400).json({ error: 'Invalid LinkedIn profile URL (expected https://www.linkedin.com/in/<handle>)' });
     if (cleanPhoto && !isValidHttpsUrl(cleanPhoto)) return res.status(400).json({ error: 'Invalid photo URL (must be https)' });
 
     await User.findByIdAndUpdate(
