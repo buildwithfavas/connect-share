@@ -25,28 +25,15 @@ export default async function handler(req, res) {
 
   // Manual CORS preflight handling to ensure OPTIONS never 404s on platform
   if (req.method === 'OPTIONS') {
-    try {
-      const defaultList = 'http://localhost:5173,http://127.0.0.1:5173,https://mind-merge-beryl.vercel.app';
-      const list = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || defaultList)
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const ok = !origin || list.includes(origin);
-      console.log(`[EDGE ${rid}] preflight url=${url} origin=${origin} allowedList=${JSON.stringify(list)} ok=${ok}`);
-      if (ok) {
-        res.setHeader('Access-Control-Allow-Origin', origin || '*');
-        res.setHeader('Vary', 'Origin');
-        res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-        res.setHeader('Access-Control-Max-Age', '86400');
-        res.statusCode = 204;
-        console.log(`[EDGE ${rid}] preflight responded 204 in ${Date.now()-started}ms`);
-        return res.end();
-      }
-    } catch {}
-    // Fall back to Express which also has cors preflight configured
-    console.log(`[EDGE ${rid}] delegating OPTIONS to Express for url=${url}`);
-    return app(req, res);
+    // Permissive preflight: always allow while debugging
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.statusCode = 204;
+    console.log(`[EDGE ${rid}] preflight (permissive) url=${url} origin=${origin} -> 204 in ${Date.now()-started}ms`);
+    return res.end();
   }
 
   // Serve health without waiting for init
