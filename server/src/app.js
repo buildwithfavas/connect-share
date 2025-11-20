@@ -34,7 +34,15 @@ app.use(helmet({
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
+    // Exact allowlist from env
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    // Allow Vercel preview URLs for the frontend project (mind-merge-beryl)
+    // e.g., https://mind-merge-beryl-git-<branch>.<team>.vercel.app
+    const vercelPreview = /^https:\/\/mind-merge-beryl(?:-git-[^.]+)?\.vercel\.app$/i;
+    if (vercelPreview.test(origin)) return callback(null, true);
+    // Common localhost variants
+    const localhost = /^http:\/\/(localhost|127\.0\.0\.1)(?::\d+)?$/i;
+    if (localhost.test(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
