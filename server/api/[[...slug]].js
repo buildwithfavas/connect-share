@@ -26,9 +26,13 @@ export default async function handler(req, res) {
   // Manual CORS preflight handling to ensure OPTIONS never 404s on platform
   if (req.method === 'OPTIONS') {
     try {
-      const list = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
+      const defaultList = 'http://localhost:5173,http://127.0.0.1:5173,https://mind-merge-beryl.vercel.app';
+      const list = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || defaultList)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
       const ok = !origin || list.includes(origin);
-      console.log(`[EDGE ${rid}] preflight origin=${origin} allowedList=${JSON.stringify(list)} ok=${ok}`);
+      console.log(`[EDGE ${rid}] preflight url=${url} origin=${origin} allowedList=${JSON.stringify(list)} ok=${ok}`);
       if (ok) {
         res.setHeader('Access-Control-Allow-Origin', origin || '*');
         res.setHeader('Vary', 'Origin');
@@ -41,7 +45,7 @@ export default async function handler(req, res) {
       }
     } catch {}
     // Fall back to Express which also has cors preflight configured
-    console.log(`[EDGE ${rid}] delegating OPTIONS to Express`);
+    console.log(`[EDGE ${rid}] delegating OPTIONS to Express for url=${url}`);
     return app(req, res);
   }
 
