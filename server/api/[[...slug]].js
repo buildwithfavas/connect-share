@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   const url = req.url || '';
   const isHealth = url === '/api/health' || url.endsWith('/api/health');
 
-  // Serve CORS preflight and health without waiting for init
+  // Serve  preflight and health without waiting for init
   if (req.method === 'OPTIONS' || isHealth) {
     return app(req, res);
   }
